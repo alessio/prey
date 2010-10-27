@@ -2,10 +2,13 @@ Description: Adjust prey-config.py according to the Debian customization.
  Application modules are installed in /usr/lib/prey/.
  Configuration is stored in /etc/prey/config.
  Disable guest account creation for security reasons.
+ Don't touch crontab files, the only one installed is managed by cron
+ daemon and it is located in /etc/cron.d.
 Author: Alessio Treglia <alessio@debian.org>
 ---
- platform/linux/prey-config.py |   32 +++-----------------------------
- 1 file changed, 3 insertions(+), 29 deletions(-)
+ platform/linux/prey-config.glade |  117 ---------------------------------------
+ platform/linux/prey-config.py    |   49 +---------------
+ 2 files changed, 4 insertions(+), 162 deletions(-)
 
 --- prey.orig/platform/linux/prey-config.py
 +++ prey/platform/linux/prey-config.py
@@ -23,7 +26,27 @@ Author: Alessio Treglia <alessio@debian.org>
  VERSION = os.popen("cat " + PREY_PATH + "/version 2> /dev/null").read().strip().replace('version=', '').replace("'",'')
  
  PAGES = ['report_options', 'control_panel_options', 'new_user', 'existing_user', 'existing_device', 'standalone_options']
-@@ -293,7 +292,7 @@ class PreyConfigurator(object):
+@@ -247,7 +246,6 @@ class PreyConfigurator(object):
+ 				button_apply.grab_default()
+ 
+ 	def ensure_visible(self,widget,event): #ensure the widget focused is visible in the scroll window
+-		self.get('delay').set_name('delay')
+ 		self.get('extended_headers').set_name('extended_headers')
+ 		widget_name = widget.get_name()
+ 		scrollwindow = self.get('main_settings_scrollwindow')
+@@ -263,10 +261,7 @@ class PreyConfigurator(object):
+ 
+ 		# for now we know there are only two possible hidden widgets so we scroll all the way up or all the way down
+ 		# if we add options to this page we will have to scroll differently
+-		if widget_name == 'delay':
+-			#scroll to top
+-			port_vadjust.set_value(0)
+-		elif widget_name == 'extended_headers':
++		if widget_name == 'extended_headers':
+ 			#scroll to bottom
+ 			port_vadjust.set_value(internal_height - port_height)
+ 
+@@ -293,7 +288,7 @@ class PreyConfigurator(object):
  			return True
  
  	def is_config_writable(self):
@@ -32,15 +55,20 @@ Author: Alessio Treglia <alessio@debian.org>
  		no_access = os.popen(command).read().strip()
  		if no_access == '1':
  			self.show_alert(_("Unauthorized"), _("You don't have access to manage Prey's configuration. Sorry."), True)
-@@ -311,7 +310,6 @@ class PreyConfigurator(object):
+@@ -306,12 +301,8 @@ class PreyConfigurator(object):
  
+ 	def get_current_settings(self):
+ 
+-		self.current_delay = os.popen("crontab -l | grep prey | cut -c 3-4").read()
+-		if not self.current_delay: self.current_delay = 20
+-
  		self.current_auto_connect = self.get_setting('auto_connect')
  		self.current_extended_headers = self.get_setting('extended_headers')
 -		self.current_guest_account = self.guest_account_exists()
  
  		self.current_lang = self.get_setting('lang')
  		self.current_check_url = self.get_setting('check_url')
-@@ -324,29 +322,8 @@ class PreyConfigurator(object):
+@@ -324,29 +315,7 @@ class PreyConfigurator(object):
  		self.current_smtp_server = self.get_setting('smtp_server')
  		self.current_smtp_username = self.get_setting('smtp_username')
  
@@ -65,18 +93,165 @@ Author: Alessio Treglia <alessio@debian.org>
 -			os.system("sed -i 's/nullok/nullok_secure/' /etc/pam.d/common-auth")
 -
  	def display_real_settings(self):
- 		self.get('delay').set_value(int(self.current_delay))
+-		self.get('delay').set_value(int(self.current_delay))
 -		self.get('guest_account').set_active(self.current_guest_account)
  
  		if self.current_auto_connect == 'y':
  			self.get('auto_connect').set_active(True)
-@@ -399,9 +376,6 @@ class PreyConfigurator(object):
+@@ -399,15 +368,6 @@ class PreyConfigurator(object):
  		self.save('auto_connect', self.checkbox('auto_connect'))
  		self.save('extended_headers', self.checkbox('extended_headers'))
  
 -		if((self.checkbox('guest_account') == 'y') != self.current_guest_account):
 -			self.toggle_guest_account(self.checkbox('guest_account') == 'y')
 -
- 		# check and change the crontab interval
- 		new_delay = self.get('delay').get_value_as_int()
- 		if new_delay != int(self.current_delay):
+-		# check and change the crontab interval
+-		new_delay = self.get('delay').get_value_as_int()
+-		if new_delay != int(self.current_delay):
+-			# print 'Updating delay in crontab...'
+-			os.system('(crontab -l | grep -v prey; echo "*/'+str(new_delay)+' * * * * /usr/share/prey/prey.sh > /var/log/prey.log") | crontab -')
+-
+ 		if self.check_if_configured == False:
+ 			self.show_alert(_("All good."), _("Configuration saved. Remember you still need to set up your posting method, otherwise Prey won't work!"))
+ 		else:
+@@ -590,7 +550,6 @@ class PreyConfigurator(object):
+ 		self.pages = builder.get_object("reporting_mode_tabs")
+ 		self.root = builder
+ 
+-		self.get('delay').grab_focus()
+ 		about = self.get('about_prey_config')
+ 		about.set_version(VERSION)
+ 		self.display_real_settings()
+--- prey.orig/platform/linux/prey-config.glade
++++ prey/platform/linux/prey-config.glade
+@@ -73,117 +73,6 @@
+                             <property name="visible">True</property>
+                             <property name="height">300</property>
+                             <child>
+-                              <object class="GtkImage" id="icon_delay">
+-                                <property name="width_request">48</property>
+-                                <property name="height_request">48</property>
+-                                <property name="visible">True</property>
+-                                <property name="pixbuf">../../pixmaps/conf/delay.png</property>
+-                              </object>
+-                              <packing>
+-                                <property name="x">10</property>
+-                                <property name="y">5</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkSpinButton" id="delay">
+-                                <property name="width_request">50</property>
+-                                <property name="height_request">25</property>
+-                                <property name="visible">True</property>
+-                                <property name="can_focus">True</property>
+-                                <property name="has_focus">True</property>
+-                                <property name="is_focus">True</property>
+-                                <property name="editable">False</property>
+-                                <property name="invisible_char">&#x2022;</property>
+-                                <property name="caps_lock_warning">False</property>
+-                                <property name="adjustment">delay_adjustment</property>
+-                                <property name="snap_to_ticks">True</property>
+-                                <property name="numeric">True</property>
+-                                <property name="wrap">True</property>
+-                                <signal name="focus_in_event" handler="ensure_visible"/>
+-                              </object>
+-                              <packing>
+-                                <property name="x">70</property>
+-                                <property name="y">1</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkLabel" id="lbl_delay">
+-                                <property name="width_request">250</property>
+-                                <property name="height_request">30</property>
+-                                <property name="visible">True</property>
+-                                <property name="xalign">0</property>
+-                                <property name="label" translatable="yes" comments="Mnemonic: Yes&#10;Context: Page 0 (Main Settings)&#10;Item: frequency&#10;&#10;Place an underscore before the character that is to serve as the keyboard mnemonic.&#10;&#10;The mnemonic chosen for this item cannot be shared by any other item on this page&#10;(see context for translation) nor by any of the global context items!">Fre_quency of reports and actions</property>
+-                                <property name="use_underline">True</property>
+-                                <property name="mnemonic_widget">delay</property>
+-                              </object>
+-                              <packing>
+-                                <property name="x">130</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkLabel" id="lbl_delay_description">
+-                                <property name="width_request">490</property>
+-                                <property name="height_request">55</property>
+-                                <property name="visible">True</property>
+-                                <property name="xalign">0</property>
+-                                <property name="yalign">0</property>
+-                                <property name="label" translatable="yes" comments="Mnemonic: No&#10;Context: Page 0 (Main Settings)&#10;Item: delay description">Number of minutes to wait before waking up Prey. Control Panel users can change this setting later on the web.</property>
+-                                <property name="wrap">True</property>
+-                                <attributes>
+-                                  <attribute name="foreground" value="#444444444444"/>
+-                                </attributes>
+-                              </object>
+-                              <packing>
+-                                <property name="x">70</property>
+-                                <property name="y">30</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkImage" id="icon_guest_account">
+-                                <property name="width_request">48</property>
+-                                <property name="height_request">48</property>
+-                                <property name="visible">True</property>
+-                                <property name="pixbuf">../../pixmaps/conf/user.png</property>
+-                              </object>
+-                              <packing>
+-                                <property name="x">10</property>
+-                                <property name="y">85</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkCheckButton" id="guest_account">
+-                                <property name="label" translatable="yes" comments="Mnemonic: Yes&#10;Context: Page 0 (Main Settings)&#10;Item: guest account&#10;&#10;Place an underscore before the character that is to serve as the keyboard mnemonic.&#10;&#10;The mnemonic chosen for this item cannot be shared by any other item on this page&#10;(see context for translation) nor by any of the global context items!">Enable _guest account</property>
+-                                <property name="width_request">200</property>
+-                                <property name="height_request">30</property>
+-                                <property name="visible">True</property>
+-                                <property name="can_focus">True</property>
+-                                <property name="receives_default">False</property>
+-                                <property name="use_underline">True</property>
+-                                <property name="draw_indicator">True</property>
+-                              </object>
+-                              <packing>
+-                                <property name="x">70</property>
+-                                <property name="y">75</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+-                              <object class="GtkLabel" id="lbl_guest_account_description">
+-                                <property name="width_request">490</property>
+-                                <property name="height_request">55</property>
+-                                <property name="visible">True</property>
+-                                <property name="yalign">0</property>
+-                                <property name="label" translatable="yes" comments="Mnemonic: No&#10;Context: Page 0 (Main Settings)&#10;Item: guest login description">Whether we should allow guest logins on the system. On password-protected computers, this greatly increases the chances of gathering information.</property>
+-                                <property name="wrap">True</property>
+-                                <attributes>
+-                                  <attribute name="foreground" value="#444444444444"/>
+-                                </attributes>
+-                              </object>
+-                              <packing>
+-                                <property name="x">70</property>
+-                                <property name="y">100</property>
+-                              </packing>
+-                            </child>
+-                            <child>
+                               <object class="GtkImage" id="icon_auto_connect">
+                                 <property name="width_request">48</property>
+                                 <property name="height_request">48</property>
+@@ -1218,12 +1107,6 @@
+       </object>
+     </child>
+   </object>
+-  <object class="GtkAdjustment" id="delay_adjustment">
+-    <property name="value">20</property>
+-    <property name="lower">5</property>
+-    <property name="upper">55</property>
+-    <property name="step_increment">5</property>
+-  </object>
+   <object class="GtkAboutDialog" id="about_prey_config">
+     <property name="border_width">5</property>
+     <property name="resizable">False</property>
