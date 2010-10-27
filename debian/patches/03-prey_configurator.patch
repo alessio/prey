@@ -1,0 +1,82 @@
+Description: Adjust prey-config.py according to the Debian customization.
+ Application modules are installed in /usr/lib/prey/.
+ Configuration is stored in /etc/prey/config.
+ Disable guest account creation for security reasons.
+Author: Alessio Treglia <alessio@debian.org>
+---
+ platform/linux/prey-config.py |   32 +++-----------------------------
+ 1 file changed, 3 insertions(+), 29 deletions(-)
+
+--- prey.orig/platform/linux/prey-config.py
++++ prey/platform/linux/prey-config.py
+@@ -41,11 +41,10 @@ _ = gettext.gettext
+ # vars and such
+ ################################################
+ 
+-PREY_PATH = '/usr/share/prey'
+-CONFIG_FILE = PREY_PATH + '/config'
++PREY_PATH = '/usr/lib/prey'
++CONFIG_FILE = '/etc/prey/config'
+ CONTROL_PANEL_URL = 'http://control.preyproject.com'
+ CONTROL_PANEL_URL_SSL = 'https://control.preyproject.com'
+-GUEST_ACCOUNT_NAME = 'guest_account'
+ VERSION = os.popen("cat " + PREY_PATH + "/version 2> /dev/null").read().strip().replace('version=', '').replace("'",'')
+ 
+ PAGES = ['report_options', 'control_panel_options', 'new_user', 'existing_user', 'existing_device', 'standalone_options']
+@@ -293,7 +292,7 @@ class PreyConfigurator(object):
+ 			return True
+ 
+ 	def is_config_writable(self):
+-		command = 'if [ ! -w "'+PREY_PATH+'/config" ]; then echo 1; fi'
++		command = 'if [ ! -w "%s" ]; then echo 1; fi' % CONFIG_FILE
+ 		no_access = os.popen(command).read().strip()
+ 		if no_access == '1':
+ 			self.show_alert(_("Unauthorized"), _("You don't have access to manage Prey's configuration. Sorry."), True)
+@@ -311,7 +310,6 @@ class PreyConfigurator(object):
+ 
+ 		self.current_auto_connect = self.get_setting('auto_connect')
+ 		self.current_extended_headers = self.get_setting('extended_headers')
+-		self.current_guest_account = self.guest_account_exists()
+ 
+ 		self.current_lang = self.get_setting('lang')
+ 		self.current_check_url = self.get_setting('check_url')
+@@ -324,29 +322,8 @@ class PreyConfigurator(object):
+ 		self.current_smtp_server = self.get_setting('smtp_server')
+ 		self.current_smtp_username = self.get_setting('smtp_username')
+ 
+-	def guest_account_exists(self):
+-		result = os.popen('id ' + GUEST_ACCOUNT_NAME + ' 2> /dev/null').read()
+-		if result.find("uid"):
+-			return False
+-		else:
+-			return True
+-
+-	def toggle_guest_account(self, enabled):
+-		if enabled:
+-			# create user and leave password blank
+-			os.system("useradd -m " + GUEST_ACCOUNT_NAME + "; passwd -d " + GUEST_ACCOUNT_NAME)
+-			# Authorize login with no passwords in gdm
+-			os.system("sed -i 's/PasswordRequired=false/#PasswordRequired=false/' /etc/gdm/gdm.conf")
+-			# Authorize login with no passwords in pam
+-			os.system("sed -i 's/nullok_secure/nullok/' /etc/pam.d/common-auth")
+-		else:
+-			os.system("userdel -r " + GUEST_ACCOUNT_NAME)
+-			os.system("sed -i 's/#PasswordRequired=false/PasswordRequired=false/' /etc/gdm/gdm.conf")
+-			os.system("sed -i 's/nullok/nullok_secure/' /etc/pam.d/common-auth")
+-
+ 	def display_real_settings(self):
+ 		self.get('delay').set_value(int(self.current_delay))
+-		self.get('guest_account').set_active(self.current_guest_account)
+ 
+ 		if self.current_auto_connect == 'y':
+ 			self.get('auto_connect').set_active(True)
+@@ -399,9 +376,6 @@ class PreyConfigurator(object):
+ 		self.save('auto_connect', self.checkbox('auto_connect'))
+ 		self.save('extended_headers', self.checkbox('extended_headers'))
+ 
+-		if((self.checkbox('guest_account') == 'y') != self.current_guest_account):
+-			self.toggle_guest_account(self.checkbox('guest_account') == 'y')
+-
+ 		# check and change the crontab interval
+ 		new_delay = self.get('delay').get_value_as_int()
+ 		if new_delay != int(self.current_delay):
