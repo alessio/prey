@@ -1,0 +1,26 @@
+#!/bin/bash
+####################################################################
+# PREY Report Module Config File - by Tomas Pollak (bootlog.org)
+# URL : http://preyproject.com
+# License: GPLv3
+####################################################################
+
+session__screenshot="$tmpdir/prey-screenshot.jpg"
+
+# should we get list of running programs
+session__get_running_programs='n'
+
+# should we get modified files
+session__get_modified_files='n'
+
+# route where to get the modified files from
+session__modified_files_path='~/'
+
+# timelapse to watch for modified files, in minutes
+session__modified_files_time='60'
+
+# should we grab a screenshot?
+session__get_screenshot='y'
+
+# new stuff
+# session__get_reboot_history='n'

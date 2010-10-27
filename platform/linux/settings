@@ -1,0 +1,12 @@
+#!/bin/bash
+###################################################################
+# Prey Linux Specific Settings - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+readonly system_path="/etc"
+readonly users_path="/home"
+readonly programs_path="/usr"
+
+# readonly config_program="$platform_path/prey-config.py"

@@ -1,0 +1,23 @@
+#!/bin/bash
+####################################################################
+# Prey Session Module Linux Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+get_screenshot() {
+
+	local scrot=`which scrot` # scrot is lighter
+	local import=`which import` # imagemagick
+
+	if [ -n "$scrot" ]; then
+
+		run_as_current_user "$scrot $session__screenshot"
+
+	elif [ -n "$import" ]; then
+
+		local args="-window root -display :0"
+		run_as_current_user "$import $args $session__screenshot"
+
+	fi
+}

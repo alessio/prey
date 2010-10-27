@@ -1,0 +1,126 @@
+#!/bin/bash
+####################################################################
+# Prey Core Pull Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+# returns if we have have network access, otherwise 0
+# you can check against the gateway or the net, change it if you like
+check_net_status(){
+	# get_gateway_ip
+	# net_check_target=$gateway_ip
+	log ' -- Looking for connection...'
+
+	local net_check_target="www.google.com"
+	if [ "$os" == "windows" ]; then
+		local ping_params='-n'
+	else
+		local ping_params='-q -c'
+	fi
+	connected=`ping $ping_params 1 $net_check_target &> /dev/null && echo 1 || echo 0`
+
+	# if there's no connection with ping, lets try to see if curl gets through
+	# since some routers/networks block ICMP requests
+	if [ $connected == 0 ]; then
+		log ' -- Trying alternate method...'
+		connected=`getter --connect-timeout 3 $net_check_target &> /dev/null && echo 1 || echo 0`
+	fi
+}
+
+randomize_subdomain(){
+	check_url=`echo $check_url | sed "s/\/\//\/\/$RANDOM./"`
+}
+
+# we could eventually use a different method for status checking
+check_device_status(){
+	if [[ "$post_method" == 'http' ]]; then
+		if [ -n "$device_key" ]; then
+			local check_url="$check_url/devices/$device_key.xml"
+		else
+			log " !! You need to enter your Device Key for querying the Control Panel!\n"
+			exit 1
+		fi
+		if [ "$randomize_check_host" == 'y' ]; then
+			randomize_subdomain
+		fi
+	fi
+	if [ "$extended_headers" == 'y' ]; then
+		log ' -- Requesting with extra sauce!'
+		get_internal_ip
+		get_gateway_ip
+		curl_headers="-H X-Local-IP:$internal_ip -H X-Gateway-IP:$gateway_ip"
+	fi
+	response=`getter $curl_headers -L -i $check_url`
+	get_status_code
+}
+
+get_status_code(){
+	# if we get a redirect response, we should capture the last http status code
+	status=`echo -e "$response" | grep 'HTTP/' | tail -1 | cut -d" " -f2`
+}
+
+verify_keys(){
+	response=`getter -u $api_key:x -i $control_panel_url/devices.xml`
+	get_status_code
+
+	if [ -n "$status" ]; then
+		if [ "$status" == "401" ]; then
+			log " !! API key not valid! Got $status status code.\n -> Remember to check your inbox to verify your account. If you already have you should reconfigure your settings, or reinstall if necessary.\n"
+			return 1
+		else
+			log  ' ** API key is valid. Your user account is correctly set up.'
+			if [[ "$status" == "200" && `find_in "$response" "<key>$device_key</key>"` ]]; then
+				local device_state=`echo "$response" | grep $device_key -A1 | tail -1 | sed 's/<[^>]*>//g;s/ //g'`
+				log " ** Device key is valid. Good. Current status is ${bold}${device_state}${bold_end}.\n"
+			else
+				log " !! Device key not valid!\n -> We couldn't find this device on your Control Panel account. Please reconfigure your settings, or reinstall if necessary.\n"
+				return 1
+			fi
+		fi
+	else
+		log " !! Couldn't get a response. Please check your firewall settings so that Curl can connect to $control_panel_url over port 80 (HTTP).\n"
+		return 1
+	fi
+	return 0
+}
+
+# we may eventually use a specific header for Prey
+parse_headers(){
+	content_type=`echo "$response" | grep "Content-Type" | tail -1 | sed 's/.*: \([a-z\/-]*\).*/\1/'`
+}
+
+# this is where the magic will happen. :)
+# some ideas:
+	# if its a shell script, run it and post back the response
+	# if its a zip file, unzip it in modules and run the active modules (the executable ones)
+	# if its a xml/json file, parse it and assign config values correspondingly
+process_response(){
+	case "$content_type" in
+	"application/xml")
+		log ' -- Got XML. Parsing...'
+		local response_type='xml'
+		;;
+	"text/xml")
+		log ' -- Got XML. Parsing...'
+		local response_type='xml'
+		;;
+	# "application/octet-stream")
+	# 	log ' -- Got a stream! What shall we do with it?'
+	#	response_type='zip'
+	#	;;
+	"text/plain")
+		log " -- Got a text file! Let's see if its something we can actually run."
+		local response_type='text'
+		;;
+	"text/html")
+		log " -- Response was an HTML file. Lets just do our job."
+		return
+		;;
+	*)
+		log " -- Couldn't determine Content-Type for response. If you're using the Control Panel, please check your settings."
+		return
+		;;
+	esac
+	# eval 'process_'"${response_type}"''
+}

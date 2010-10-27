@@ -1,0 +1,105 @@
+#!/bin/bash
+####################################################################
+# Prey Core Module Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+# mac/linux only. windows has another method of de/activating modules
+is_module_active(){
+	if [ -x "$base_path/modules/$1/core/run" ]; then
+		echo 1
+	else
+		return 0
+	fi
+}
+
+get_active_modules_from_filesystem(){
+	for module in `find "$base_path/modules" -maxdepth 1 -mindepth 1 -type d`; do
+		local module_name=`echo $module | sed 's/.*[\\|\/]\([a-z_-]*\)$/\1/'`
+		if [ `is_module_active "$module_name"` ]; then
+			initialize_module $module_name
+			active_modules="$active_modules $module_name"
+		fi
+	done
+}
+
+# gets the module name ($1) and optionally the upstream version ($2)
+setup_module(){
+
+	module_path="$base_path/modules/$1"
+	upstream_version=$2
+
+	if [ ! -d "$module_path" ]; then
+		log " !! Module $1 not found!"
+		install_or_update_module $1
+		return $?
+	elif [ -n "$upstream_version" ]; then # module is already there, lets see if the versions match
+
+		local installed_version=`cat "$module_path/version" 2> /dev/null`
+
+		if [ `is_greater_than $upstream_version $installed_version` == 1 ]; then
+			log " -- Updating $module module to version $upstream_version!"
+			install_or_update_module $1
+			return $?
+		fi
+
+	fi
+}
+
+initialize_module(){
+
+	set_module_paths_for $1
+
+	# if there's a language file, lets run it
+	if [ -f "$module_path/lang/$lang" ]; then
+	. "$module_path/lang/$lang"
+	elif [ -f "$module_path/lang/en" ]; then
+	. "$module_path/lang/en"
+	fi
+
+	# if there's a config file, lets run it as well
+	if [ -f "$module_path/config" ]; then
+		. "$module_path/config"
+	fi
+
+	# lets load the base functions for the module
+	if [ -f "$module_path/core/functions" ]; then
+		. "$module_path/core/functions"
+	fi
+
+	# and the OS-specific if there are
+	if [ -f "$module_platform_path/functions" ]; then
+		. "$module_platform_path/functions"
+	fi
+
+}
+
+#unset_module_vars(){
+#	unset current_module
+#	unset module_path
+#	unset module_platform_path
+#}
+
+set_module_paths_for(){
+	module_path="$base_path/modules/$1"
+	module_platform_path="$module_path/platform/$os"
+}
+
+run_active_modules() {
+
+	if [[ -z $active_modules && "$post_method" != 'http' ]]; then
+		get_active_modules_from_filesystem
+	fi
+
+	for current_module in $active_modules; do
+
+		set_module_paths_for $current_module
+		log "\n${bold} >> Running $current_module module!${bold_end}\n"
+
+		# now, go!
+		. "$module_path/core/run"
+
+	done
+
+}

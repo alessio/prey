@@ -1,0 +1,43 @@
+#: ../prey.sh:30
+msgid "PREY $version spreads its wings!"
+msgstr ""
+
+#: ../prey.sh:41
+msgid "Trying to connect to first open wifi network available"
+msgstr ""
+
+#: ../prey.sh:49
+msgid "Couldn't find a way to connect to an open wifi network!"
+msgstr ""
+
+#: ../prey.sh:64
+msgid "Running configurator!"
+msgstr ""
+
+#: ../prey.sh:71
+msgid "Registering device under account!"
+msgstr ""
+
+#: ../prey.sh:84
+msgid "Verifying Prey installation"
+msgstr ""
+
+#: ../prey.sh:87
+msgid "Verifying API and Device keys"
+msgstr ""
+
+#: ../prey.sh:102
+msgid "Checking URL"
+msgstr ""
+
+#: ../prey.sh:111
+msgid "Got status code $status!"
+msgstr ""
+
+#: ../prey.sh:122
+msgid "Running active report modules"
+msgstr ""
+
+#: ../prey.sh:129
+msgid "Sending report!"
+msgstr ""

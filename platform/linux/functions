@@ -1,0 +1,117 @@
+#!/bin/bash
+####################################################################
+# Prey Linux Specific Functions - by Tomas Pollak
+# (c) 2010 Fork Ltd. (usefork.com) - Licensed under the GPLv3.
+####################################################################
+
+run_as_current_user(){
+	if [ `whoami` == 'root' ]; then
+		DISPLAY=:0 su $logged_user -c "$1"
+	else
+		eval $1
+	fi
+}
+
+get_gateway_ip() {
+	if [ -z "$gateway_ip" ]; then
+		gateway_ip=`ip r | grep default | cut -d ' ' -f 3`
+	fi
+}
+
+get_wifi_device() {
+	if [ -z "$wifi_device" ]; then
+		wifi_device=`cat /proc/net/wireless | tail -1 | grep -v "nwid" | sed -e 's/^\([^:].*\):.*/\1/' -e 's/ //g'`
+	fi
+}
+
+get_wifi_info() {
+	if [ -z "$wifi_info" ]; then
+		wifi_info=`\`which iwconfig\` 2>&1 | grep -v "no wireless"`
+	fi
+}
+
+# attempts to connect to the first open public wifi network
+# if we dont have NetworkManager available, we use plain iwconfig
+try_to_connect() {
+
+	if [ `which nm-applet` ]; then
+
+		# lets restart the NM applet and give it 5 seconds to connect
+		killall nm-applet &> /dev/null
+		nm-applet --sm-disable & 2> /dev/null
+		sleep 5
+
+	else
+
+		get_wifi_device
+		if [ -n "$wifi_device" ]; then
+
+			# access_points=`iwlist $wifi_device | awk -F '[ :=]+' '/(ESS|Freq|Qual)/{ printf $3" " } /Encr/{ print $4 }' | sort -k4 -k3nr`
+			local open_essid=`\`which iwlist\` $wifi_device scan | awk -F '[ :=]+' '/(ESS|Freq|Qual)/{ printf $3" " } /Encr/{ print $4 }' | sort -k4 -k3nr | grep "off" | head -1 | cut -d ' ' -f1 | sed 's/"//g'`
+
+			# lets see if we have a valid device and essid
+			if [ -n $open_essid ]; then
+				`which iwconfig` $wifi_device essid $open_essid
+				`which dhclient3` $wifi_device
+			fi
+
+		else
+
+			log ' !! No wifi device found!'
+
+		fi
+
+	fi
+
+}
+
+############################################
+# updater-specific functions
+############################################
+
+# here we'll eventually put whatever we need to do in linux before
+# performing a full update
+pre_update_hook(){
+	return 0
+}
+
+# post update hooks go in here
+post_update_hook(){
+	log ' -- Reloading Prey...'
+	"$base_path/prey.sh" & # lets restart prey now
+}
+
+############################################
+# device creation stuff
+############################################
+
+get_pc_info(){
+	pc_name=`hostname`
+
+	`which laptop-detect`
+	if [ $? == 1 ]; then
+		pc_type="Desktop"
+	else
+		pc_type="Portable"
+	fi
+
+	local distro=`cat /proc/version 2>&1`
+
+	# todo: make this in a more efficient way
+	if [ -n `find_in $distro 'Ubuntu'` ]; then
+		pc_os_version='ubuntu'
+	elif [ -n `find_in $distro 'Debian'` ]; then
+		pc_os_version='ubuntu' # Ian please dont kill me
+	elif [ -n `find_in $distro 'Fedora'` ]; then
+		pc_os_version='fedora'
+	elif [ -n `find_in $distro 'Redhat'` ]; then
+		pc_os_version='fedora'
+	elif [ -n `find_in $distro 'CentOS'` ]; then
+		pc_os_version='fedora'
+	elif [ -n `find_in $distro 'SuSE'` ]; then
+		pc_os_version='suse'
+	else
+		pc_os_version='other'
+	fi
+
+}

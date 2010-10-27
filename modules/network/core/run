@@ -1,0 +1,46 @@
+#!/bin/bash
+####################################################################
+# Prey Network Module - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+log "$STRING_GET_IP"
+get_public_ip
+add_trace public_ip $public_ip
+
+log "$STRING_GET_LAN_IP"
+get_internal_ip
+add_trace internal_ip $internal_ip
+
+log " -- Getting gateway IP address..."
+if [ -z "$gateway_ip" ]; then
+	get_gateway_ip
+fi
+add_trace gateway_ip $gateway_ip
+
+log "$STRING_GET_MAC_AND_WIFI"
+get_mac_address
+add_trace mac_address $mac_address
+
+if [ "$network__get_active_connections" == 'y' ]; then
+	log "$STRING_ACTIVE_CONNECTIONS"
+	get_active_connections
+	add_trace active_connections "$active_connections"
+fi
+
+if [ "$network__get_nearby_wifi_hotspots" == 'y' ]; then
+	log ' -- Getting list of nearby Wifi access points...'
+	if [ -z "$wifi_info" ]; then
+		get_wifi_info
+	fi
+	if [ -n "$wifi_info" ]; then
+		add_trace wifi_info "$wifi_info"
+	fi
+fi
+
+if [ "$network__trace_route" == 'y' ]; then
+	log "$STRING_TRACE"
+	trace_route
+	add_trace complete_trace "$complete_trace"
+fi

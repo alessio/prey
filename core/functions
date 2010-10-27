@@ -1,0 +1,252 @@
+#!/bin/bash
+####################################################################
+# Prey Core Basic Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+log(){
+	eval echo -e '"$1"' "$log_output"
+}
+
+####################################################################
+# xml parsing functions
+####################################################################
+
+get_key(){
+	echo "$1" | sed -e 's/.*\/\(.*\)>/\1/' -e 'y/-/_/' # we also replace -'s to _'s
+}
+
+get_value(){
+	echo "$1" | sed 's/.*>\([^<].*\)<.*/\1/'
+}
+
+# expects attr name, returns value
+# example: get_attribute 'name' $line
+get_attribute(){
+	echo "$2" | sed "s/.*$1=\"\([a-z_]*\)\".*/\1/"
+}
+
+####################################################################
+# setting configs
+####################################################################
+
+# key, value
+set_config(){
+	eval "${1}=\"$2\""
+}
+
+# module, key, value
+set_module_config(){
+	set_config "${1}__${2}" "$3"
+}
+
+save_config_value(){
+	sed -i.backup -e "s/^$1=.*/$1='$2'/" "$config_file" 2> /dev/null
+	local rs=$?
+	if [ -f "$config_file" ]; then
+		rm -f "$config_file.backup" 2> /dev/null
+	else
+		mv "$config_file.backup" "$config_file" 2> /dev/null
+	fi
+	return $rs
+}
+
+####################################################################
+# local var storage
+####################################################################
+
+# fetches a var and then assigns it as $value
+# expects the name of hash and then the name of var
+get_var(){
+	HASH="$1[*]"
+	local ${!HASH}
+	eval 'echo ${'"${2}"'}'
+}
+
+# if you need to fetch a specific trace or file
+get_trace(){
+	get_var traces ${1}__$2
+}
+
+get_file(){
+	get_var files ${1}__$2
+}
+
+####################################################################
+# trace functions
+####################################################################
+
+add_trace(){
+	local urlencoded=`urlencode "$2"`
+	local trace="${current_module}__$1=$urlencoded"
+	log " ++ Adding trace for $current_module: $1"
+	# we need to encode whitespaces, otherwise well get into trouble
+	traces[${#traces[*]}]="$trace"
+}
+
+separator='########################################################'
+
+list_traces(){
+	# echo " -- ${#traces[*]} traces gathered!"
+	for t in "${traces[@]}"
+	do
+		if [ "$post_method" == 'http' ]; then
+			# echo -n $t | sed 's/^\([^_].*\)__\([^=].*\)=\(.*\)/\1[\2]="\3"\&/' # query string
+			# echo "-F $t" | sed 's/^\([^_].*\)__\([^=].*\)=\(.*\)/\1[\2]=\3/' # form field list
+			# echo $t | sed 's/^\([^_].*\)__\([^=].*\)=\(.*\)$/<\2>\3<\/\2>/' # xml
+			local start=`echo ${t%%=*}`
+			local index=`echo $(( ${#start} + 1 ))`
+			local trace_field=`echo "-F $start" | sed 's/^\([^_].*\)__\(.*\)/\1[\2]/'`
+			echo "${trace_field}=${t:index}"
+		else
+			local current_node=`echo $t | sed 's/__.*//'`
+			if [ "$current_node" != "$previous_node" ]; then
+				echo -e "$separator\n# $current_node\n$separator\n"
+			fi
+			# removes module name and replaces _'s with whitespaces
+			echo -e "$t\n" | sed -e 's/^\([^_].*\)__/ :: /' -e 's/%20/ /g' -e 's/_/ /'
+			local previous_node=$current_node
+		fi
+	done
+}
+
+remove_traces(){
+	unset -v traces
+	log " -- Dropping all traces!"
+}
+
+
+add_file(){
+	if [ -f "$2" ]; then
+		log " ++ Adding file for $current_module: $1 -> $2"
+		files[${#files[*]}]=${current_module}__$1=$2
+	else
+		log " ${red}!!${color_end} Couldn't find file at $2!"
+	fi
+}
+
+list_files(){
+	# log " -- ${#files[*]} files gathered!"
+	for f in "${files[@]}"
+	do
+		if [ "$post_method" == 'http' ]; then
+			# echo -e "-F $f" | sed -e 's/=/=@/'
+			echo "-F $f" | sed 's/^\([^_].*\)__\([^=].*\)=\(.*\)/\1[\2]=@\3/'
+		else # just list the file paths
+			echo $f | sed 's/^.*=\(.*\)/\1/'
+		fi
+	done
+}
+
+remove_files(){
+	for f in "${files[@]}"
+	do
+		file=`echo $f | sed 's/^.*=\(.*\)/\1/'`
+		rm -f "$file"
+		log " -- Removed $file"
+	done
+	unset -v files
+}
+
+####################################################################
+# delay functions, mac and linux
+####################################################################
+
+get_current_delay(){
+	# crontab -l | grep prey | sed "s/^..\([0-9]*\).*/\1/"
+	crontab -l | grep prey | head -1 | sed 's/ \/.*//'
+}
+
+get_delay_for(){
+	local delay_var=$(($1*1))
+	if [ "$delay_var" == "$1" ]; then # integer, minute
+		echo '*/'$1' * * * *'
+	else
+		case "$1" in
+		"hourly")
+			echo '1 * * * *' # first minute of every hour
+			;;
+		"daily")
+			echo '1 10 * * *' # at 10:01 o'clock every day
+			;;
+		"weekly")
+			echo '1 10 * * 1' # at 10:01 o'clock every monday
+			;;
+		# "monthly")
+		# 	echo '1 10 1 * *' # at 10:01 o'clock every 1st of month
+		# 	;;
+		esac
+	fi
+}
+
+update_execution_delay(){
+	local full_path=`full_path "$base_path"`
+	(crontab -l | grep -v prey; echo "${new_delay}" "${full_path}/prey.sh > /var/log/prey.log") | crontab -
+}
+
+
+####################################################################
+# network core functions
+####################################################################
+
+get_internal_ip() {
+	if [ -z "$internal_ip" ]; then
+		internal_ip=`/sbin/ifconfig 2> /dev/null | grep "inet" | grep -v "inet6" | grep -v "127.0.0.1" | awk '{print $2}' | sed "s/[^0-9\.]//g" | head -1`
+	fi
+}
+
+####################################################################
+# check mode functions
+####################################################################
+
+verify_installation(){
+	log " -- Checking if cron daemon is running..."
+	if [ -n `is_process_running 'cron'` ]; then
+		log " -- Cron daemon found."
+	else
+		log " !! Cron daemon not found! Try running it with 'sudo /etc/init.d/cron start'."
+	fi
+	log " -- Checking for crontab entry..."
+	local result=`crontab -l | grep 'prey.sh' | wc -l 2> /dev/null`
+	if [ "$result" -gt 0 ]; then
+		log " -- Found!"
+	else
+		log " !! Not found!\n -> It seems Prey's crontab entry was removed after installation. Please set again the running interval."
+	fi
+}
+
+####################################################################
+# self setup functions
+####################################################################
+
+self_setup(){
+
+	log ' -- Sending request to Control Panel...'
+
+	get_pc_info
+	local params="device[title]=$pc_name&device[device_type]=$pc_type&device[os_version]=$pc_os_version&device[os]=`capitalize $os`"
+	local response=`getter --connect-timeout 10 -u $api_key:x -i $check_url/devices.xml -d "$params"`
+	get_status_code
+
+	if [ $status == "201" ]; then
+
+		log ' -- Device succesfully added! Applying configuration...'
+		device_key=`echo "$response" | grep "<key>" | sed 's/.*<key>\(.*\)<\/key>.*/\1/'`
+
+		save_config_value device_key "$device_key"
+
+		if [ $? == 1 ]; then
+			log " -- There was a problem saving the configuration. You probably don't have permissions to modify $base_path/config."
+		else
+			log ' -- All set.'
+		fi
+
+	else
+
+		log " -- Couldn't add this device to your account. Make sure you have available slots!\n"
+		exit 1
+
+	fi
+
+}

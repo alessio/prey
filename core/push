@@ -1,0 +1,119 @@
+#!/bin/bash
+####################################################################
+# Prey Core Push Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+update_device_info_with(){
+
+	if [ -z "$device_key" ]; then return 1; fi
+
+	log ' -- Updating device info...'
+	local response=`getter -i -X PUT -u $api_key:x $check_url/devices/$device_key.xml -d "$1"`
+
+	get_status_code
+	if [ $status == "200" ]; then
+		log " -- Device updated."
+	else
+		log " -- Couldn't update your device. Maybe the Control Panel is taking a bath."
+	fi
+
+}
+
+deactivate_modules_on_panel(){
+
+	if [ -z "$device_key" ]; then return 1; fi
+
+	log " -- Deactivating module(s) ${1} on Control Panel..."
+
+	local param_string=""
+	until [ -z "$1" ]; do
+		local param_string="${param_string}device[deactivate_modules][]=$1&"
+		shift
+	done
+
+	update_device_info_with "$param_string"
+}
+
+send_report(){
+	log ' -- Packing all gathered traces...'
+	local trace_list=`list_traces`
+	file_list=`list_files`
+	if [[ $trace_list || $file_list ]]; then
+			if [ -n "$test_mode" ]; then
+				log ' >> This is where the data gets sent. Though not in test mode!'
+			else
+				trace_file="$tmpdir/prey_traces.tmp"
+				echo -e "$trace_list" > "$trace_file"
+				log " -- Posting data via $post_method..."
+				eval 'send_via_'"${post_method}"''
+				rm -f "$trace_file"
+			fi
+		remove_traces
+		remove_files
+	else
+		log " -- No data to send. It seems you didn't activate any report modules. Skipping..."
+	fi
+}
+
+send_via_email(){
+
+	local complete_subject="$mail_subject @ `date +"%a, %e %Y %T %z"`"
+	echo -e "${EMAIL_NOTICE}${EMAIL_HEADER}`urldecode "$trace_list"`${EMAIL_FOOTER}" > "$trace_file.msg"
+
+	response=`mailsender -f "$mail_from" -t "$mail_to" -u "$complete_subject" -s $smtp_server -a $file_list -o message-file="$trace_file.msg" tls=auto username=$smtp_username password=\`decrypt "$smtp_password"\``
+
+	if [ `find_in "$response" 'ERROR'` ]; then
+		log "$STRING_ERROR_EMAIL"
+		log "\n This is the complete error message: \n $response\n"
+	else
+		log ' -- Report successfully sent! Check your inbox now.'
+	fi
+
+	rm "$trace_file.msg"
+}
+
+send_via_http(){
+	if [ -z "$api_key" ]; then
+		log ' -- API key not set! Cannot post data to server.'
+		return 1
+	else
+		local args="-u $api_key:x"
+	fi
+	if [ `find_in "$post_url" 'https'` ]; then
+		echo " -- Using SSL v3 encryption! Nice."
+		args="$args -k -3"
+	fi
+	response=`getter $args -K "$trace_file" $file_list "$post_url" \
+	--write "\n -- %{size_upload} bytes uploaded in %{time_total} seconds, at %{speed_upload} bytes/sec."`
+
+	log " -- $response"
+}
+
+send_via_scp(){
+	if [[ -n "$scp_server" && -n "$scp_path" ]]; then
+		log " -- Uploading the stuff to $scp_path in $scp_server..."
+		local new_folder="prey_data_`echo $start_time | sed 'y/ :/_-/'`"
+		ssh $scp_user@$scp_server mkdir $scp_path/$new_folder
+		response=`scp $ssh_options "$trace_file" "$file_list" $scp_user@$scp_server:$scp_path/$new_folder`
+	else
+		log ' !! You need to set up a server in order to send the report via SCP!'
+	fi
+}
+
+# SFTP posting by http://github.com/birdtori
+send_via_sftp(){
+	if [[ -n "$sftp_server" && -n "$sftp_path" ]]; then
+		local new_folder="prey_data_`echo $start_time | sed 'y/ :/_-/'`"
+		log " -- Uploading the stuff to $sftp_path/$new_folder in $sftp_server..."
+		local batch="$tmpdir/sftp.script"
+		echo "mkdir $sftp_path/$new_folder"                           >  "$batch"
+		echo "put "$trace_file" $sftp_path/$new_folder/"              >> "$batch"
+		for f in $file_list; do echo "put $f $sftp_path/$new_folder/" >> "$batch"; done
+		echo "bye"                                                    >> "$batch"
+		response=`sftp $ssh_options -b $batch $sftp_user@$sftp_server`
+	else
+		log ' !! You need to set up a server in order to send the report via SFTP!'
+	fi
+}

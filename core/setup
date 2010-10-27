@@ -1,0 +1,99 @@
+#!/bin/bash
+####################################################################
+# Prey Core Setup Routine - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+trap "" INT TERM
+# trap cleanup EXIT
+
+cleanup(){
+	log " -- Cleaning up!\n"
+	delete_tmpdir
+}
+
+# step throught the params and check
+until [ -z "$1" ]; do
+	if [[ "$1" == "-t" || "$1" == "--test" ]]; then
+		echo -e "\n -- TEST MODE ENABLED."
+		trap - INT # set off trap
+		test_mode=1
+		. $base_path/test/include "$2" 2> /dev/null
+	elif [[ "$1" == '-c' || "$1" == '--check' ]]; then
+		echo -e "\n -- CHECK MODE ENABLED."
+		check_mode=1
+	elif [[ "$1" == "-l" || "$1" == "--log" ]]; then
+		logfile="$base_path/prey.log"
+		echo -n "" > "$logfile" # empty the logfile first
+		log_output=">> \"$logfile\""
+	elif [[ "$1" == "-s" || "$1" == "--silent" ]]; then
+		log_output="&> /dev/null"
+	fi
+	shift
+done
+
+get_os(){
+	os=`lowercase \`uname\``
+
+	if [ "$os" == "windowsnt" ]; then
+		os=windows
+	else # linux/mac stuff
+		if [ "$os" == "darwin" ]; then
+			os=mac
+		fi
+		readonly logged_user=`who | cut -d' ' -f1 | sort -u | tail -1`
+		readonly root_path='/'
+		readonly home_path=`eval echo ~`
+		set_colors
+	fi
+
+	readonly os
+	readonly platform_path="$base_path/platform/$os"
+	PATH=$PATH:$platform_path/bin
+
+}
+
+# here we put the vars that are shared by two os, but a third one has
+# different values
+set_vars(){
+	tmpbase="/tmp"
+	line_breaker="\n"
+	user_agent="-A Prey/$version ($os)"
+	processes='ps ax'
+}
+
+set_aliases(){
+	shopt -s expand_aliases
+	alias getter="curl $curl_options -s \"$user_agent\""
+	alias mailsender="sendEmail"
+}
+
+set_constants(){
+	readonly lang
+	readonly start_time=`date +"%F %T"`
+
+	readonly config_file="$base_path/config"
+	readonly tmpdir="$tmpbase/p${RANDOM}"
+	# readonly last_response="$tmpbase/last_response.tmp"
+	readonly logged_user
+
+	readonly control_panel_url="http://control.preyproject.com" 2> /dev/null
+	readonly updates_url="http://cloud.github.com/downloads/tomas/prey" 2> /dev/null
+	readonly modules_url=$control_panel_url 2> /dev/null
+}
+
+set_colors(){
+	cyan='\E[36m'
+	green='\E[32m'
+	red='\E[31m'
+	color_end='\E[0m'
+	bold='\033[1m'
+	bold_end='\033[0m'
+}
+
+get_os
+set_vars
+set_aliases
+. "$platform_path/settings"
+set_constants

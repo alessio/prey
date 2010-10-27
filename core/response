@@ -1,0 +1,136 @@
+#!/bin/bash
+####################################################################
+# Prey Core Response Functions - (c) 2010 - Fork Ltd.
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+process_config(){
+
+	local prey_configuration=`echo -e "$response" | awk -F"[<>]" ' /<configuration>/,/<\/configuration>/' | grep -v "configuration>"`
+	if [ -z "$prey_configuration" ]; then
+		return 1
+	fi
+
+	log "\n${bold} >> Reading configuration...${bold_end}\n"
+
+	# inmense thanks to this post, it saved my day
+	# http://edwardawebb.com/linux/scope-issue-bash-loops
+	STDOUT=$(echo -e "$prey_configuration")
+	while read line; do
+
+		local key=`get_key "$line"`
+		local value=`get_value "$line"`
+
+		if [ `find_in "$line" 'save="true"'` ]; then
+			save_config_value "$key" "$value" #write config value to file
+		fi
+
+		set_config "$key" "$value"
+
+	done <<< "$STDOUT"
+
+	# check the current delay against the instruction from the server
+
+	new_delay=`get_delay_for $delay`
+
+	if [ "`get_current_delay`" != "$new_delay" ]; then
+		log " -- Setting frequency to $delay!"
+		update_execution_delay "$new_delay"
+	else
+		log " -- Frequency in sync ($delay)."
+	fi
+
+	# check the current version against the one gotten from the server
+
+	if [[ "$auto_update" == "true" && `is_greater_than $current_release $version` == 1 ]]; then
+
+		log " -- New Prey version found! Auto-update selected so let's try to upgrade."
+		run_prey_updater
+
+	fi
+
+}
+
+# Prey expects a <configuration> and <modules> section in the xml
+# and activates de modules as requested. format should be as follows:
+
+# <device>
+#		<missing>true</missing>
+# </device>
+# <configuration>
+#		<delay>10</delay>
+# </configuration>
+#	<modules>
+#		<module name="alert" active="true">
+#			<alert-message>Give it back!</alert-message>
+#		</module>
+#		<module name="network" active="true">
+#			<traceroute>n</traceroute>
+#		</module>
+#	</modules>
+
+# it should also work with one-line module entries (with no configuration), such as
+# <module name="location" active="true" />
+
+process_module_config(){
+
+	local module_configuration=`echo -e "$response" | awk -F"[<>]" ' /<modules>/,/<\/modules>/' | grep -v "\/module" | sed '1d'`
+	if [ -z "$module_configuration" ]; then
+		return 1
+	fi
+
+	log "\n${bold} >> Reading module configuration...${bold_end}\n"
+
+	STDOUT=$(echo -e "$module_configuration")
+
+	while read line; do
+
+		if [ `find_in "$line" 'name='` ]; then # we have a module node
+			local module_name=`get_attribute 'name' "$line"`
+			log " -- Got instructions for $module_name module."
+
+			if [ "$auto_update" == "true" ]; then  # auto_update is enabled
+				local upstream_version=`echo $line | sed 's/^.*version="\([0-9.]*\)".*/\1/'`
+			fi
+
+			setup_module $module_name $upstream_version
+			if [ $? == 1 ]; then # we got an error installing the new module
+
+				log " !! Couldn't install $module_name module from repository."
+				unset module_name
+				continue
+
+			else # lets see if its a report module or an action module
+
+				initialize_module $module_name
+
+				local module_type=`get_attribute 'type' "$line"`
+				if [ "$module_type" == 'action' ]; then
+
+					if [ `find_in "$line" 'function='` ]; then # a specific function was requested
+						local function_name=`get_attribute 'function' "$line"`
+					else
+						local function_name=''
+					fi
+
+					add_action $module_name $function_name
+					unset function_name
+
+				else # then its a report module
+					active_modules="$active_modules $module_name"
+				fi
+
+			fi
+
+		elif [ -n "$module_name" ]; then # config line for module $module
+
+			local key=`get_key "$line"`
+			local value=`get_value "$line"`
+			set_module_config "$module_name" "$key" "$value"
+
+		fi
+
+	done <<< "$STDOUT"
+
+}
