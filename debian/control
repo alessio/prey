@@ -3,6 +3,7 @@ Section: utils
 Priority: optional
 Maintainer: Alessio Treglia <alessio@debian.org>
 Build-Depends: debhelper (>= 7.0.50~),
+ po-debconf,
  python-support,
  python
 Homepage: http://www.preyproject.com/
