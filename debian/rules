@@ -1,0 +1,22 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_install:
+	dh_install
+	# Remove old translations
+	rm -rf $(CURDIR)/debian/prey/usr/lib/prey/lang/old
+
+override_dh_fixperms:
+	cd $(CURDIR)/debian/prey/usr/lib/prey &&\
+	chmod +x \
+		core/* \
+		platform/linux/functions \
+		platform/linux/settings
+	chmod -x $(CURDIR)/debian/prey/usr/share/prey/pixmaps/prey.ico
+	dh_fixperms
+
+# Move to the sources root before running this.
+get-orig-source:
+	uscan --force-download --repack --rename

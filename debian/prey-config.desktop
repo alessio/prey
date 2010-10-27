@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Prey Configurator
+GenericName=Prey Configurator
+Comment=Configure Prey Laptop Tracker Settings
+Exec=su-to-root -c /usr/bin/prey-config
+Terminal=false
+Type=Application
+Icon=prey
+Categories=System;
+Name[en_US]=Prey Configurator
+GenericName[en_US]=Configurator for the Prey Laptop Tracker

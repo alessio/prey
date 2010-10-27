@@ -1,0 +1,18 @@
+#!/bin/bash
+####################################################################
+# Prey Debian Preinstall Script - by Tomas Pollak (bootlog.org)
+# URL : http://preyproject.com
+# License: GPLv3
+####################################################################
+
+set -e
+
+INSTALLPATH=/usr/share/prey
+
+if [ -f $INSTALLPATH/config ]; then
+mv $INSTALLPATH/config $INSTALLPATH/config.backup
+fi
+
+#DEBHELPER#
+
+exit 0

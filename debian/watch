@@ -1,0 +1,4 @@
+version=3
+#http://githubredir.debian.net/github/tomas/prey (.*).tar.gz
+http://preyproject.com/download \
+	/releases/.*/prey-([\d.]*)-linux\.zip
