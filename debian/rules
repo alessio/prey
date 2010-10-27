@@ -9,11 +9,15 @@ override_dh_install:
 	rm -rf $(CURDIR)/debian/prey/usr/lib/prey/lang/old
 
 override_dh_fixperms:
+	# Fix file permissions
 	cd $(CURDIR)/debian/prey/usr/lib/prey &&\
 	chmod +x \
 		core/* \
 		platform/linux/functions \
 		platform/linux/settings
+	find $(CURDIR)/debian/prey/usr/lib/prey/modules -type f | xargs chmod +x
+	find $(CURDIR)/debian/prey/usr/lib/prey -regextype posix-extended \
+		-regex ".*(mp3|png|ico|version)" | xargs chmod -x
 	chmod -x $(CURDIR)/debian/prey/usr/share/prey/pixmaps/prey.ico
 	dh_fixperms
 
