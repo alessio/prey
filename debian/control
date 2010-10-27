@@ -15,12 +15,13 @@ Vcs-Browser: http://git.debian.org/?p=collab-maint/prey.git
 Package: prey
 Architecture: all
 Depends: openssl,
- scrot,
+ imagemagick | scrot,
  bash (>= 4),
  curl,
  streamer,
  libio-socket-ssl-perl,
  libnet-ssleay-perl,
+ ${perl:Depends},
  ${misc:Depends}
 Recommends: python-gtk2,
  menu,
