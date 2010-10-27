@@ -6,9 +6,9 @@ Description: Adjust prey-config.py according to the Debian customization.
  daemon and it is located in /etc/cron.d.
 Author: Alessio Treglia <alessio@debian.org>
 ---
- platform/linux/prey-config.glade |  117 ---------------------------------------
- platform/linux/prey-config.py    |   49 +---------------
- 2 files changed, 4 insertions(+), 162 deletions(-)
+ platform/linux/prey-config.glade |    9 +++++--
+ platform/linux/prey-config.py    |   49 +++------------------------------------
+ 2 files changed, 11 insertions(+), 47 deletions(-)
 
 --- prey.orig/platform/linux/prey-config.py
 +++ prey/platform/linux/prey-config.py
@@ -124,134 +124,60 @@ Author: Alessio Treglia <alessio@debian.org>
  		self.display_real_settings()
 --- prey.orig/platform/linux/prey-config.glade
 +++ prey/platform/linux/prey-config.glade
-@@ -73,117 +73,6 @@
-                             <property name="visible">True</property>
-                             <property name="height">300</property>
-                             <child>
--                              <object class="GtkImage" id="icon_delay">
--                                <property name="width_request">48</property>
--                                <property name="height_request">48</property>
--                                <property name="visible">True</property>
--                                <property name="pixbuf">../../pixmaps/conf/delay.png</property>
--                              </object>
--                              <packing>
--                                <property name="x">10</property>
--                                <property name="y">5</property>
--                              </packing>
--                            </child>
--                            <child>
--                              <object class="GtkSpinButton" id="delay">
--                                <property name="width_request">50</property>
--                                <property name="height_request">25</property>
--                                <property name="visible">True</property>
--                                <property name="can_focus">True</property>
--                                <property name="has_focus">True</property>
--                                <property name="is_focus">True</property>
--                                <property name="editable">False</property>
--                                <property name="invisible_char">&#x2022;</property>
--                                <property name="caps_lock_warning">False</property>
--                                <property name="adjustment">delay_adjustment</property>
--                                <property name="snap_to_ticks">True</property>
--                                <property name="numeric">True</property>
--                                <property name="wrap">True</property>
+@@ -93,13 +93,13 @@
+                                 <property name="has_focus">True</property>
+                                 <property name="is_focus">True</property>
+                                 <property name="editable">False</property>
++                                <property name="sensitive">False</property>
+                                 <property name="invisible_char">&#x2022;</property>
+                                 <property name="caps_lock_warning">False</property>
+                                 <property name="adjustment">delay_adjustment</property>
+                                 <property name="snap_to_ticks">True</property>
+                                 <property name="numeric">True</property>
+                                 <property name="wrap">True</property>
 -                                <signal name="focus_in_event" handler="ensure_visible"/>
--                              </object>
--                              <packing>
--                                <property name="x">70</property>
--                                <property name="y">1</property>
--                              </packing>
--                            </child>
--                            <child>
--                              <object class="GtkLabel" id="lbl_delay">
--                                <property name="width_request">250</property>
--                                <property name="height_request">30</property>
--                                <property name="visible">True</property>
--                                <property name="xalign">0</property>
--                                <property name="label" translatable="yes" comments="Mnemonic: Yes&#10;Context: Page 0 (Main Settings)&#10;Item: frequency&#10;&#10;Place an underscore before the character that is to serve as the keyboard mnemonic.&#10;&#10;The mnemonic chosen for this item cannot be shared by any other item on this page&#10;(see context for translation) nor by any of the global context items!">Fre_quency of reports and actions</property>
--                                <property name="use_underline">True</property>
--                                <property name="mnemonic_widget">delay</property>
--                              </object>
--                              <packing>
--                                <property name="x">130</property>
--                              </packing>
--                            </child>
--                            <child>
--                              <object class="GtkLabel" id="lbl_delay_description">
--                                <property name="width_request">490</property>
--                                <property name="height_request">55</property>
--                                <property name="visible">True</property>
--                                <property name="xalign">0</property>
--                                <property name="yalign">0</property>
--                                <property name="label" translatable="yes" comments="Mnemonic: No&#10;Context: Page 0 (Main Settings)&#10;Item: delay description">Number of minutes to wait before waking up Prey. Control Panel users can change this setting later on the web.</property>
--                                <property name="wrap">True</property>
--                                <attributes>
--                                  <attribute name="foreground" value="#444444444444"/>
--                                </attributes>
--                              </object>
--                              <packing>
--                                <property name="x">70</property>
--                                <property name="y">30</property>
--                              </packing>
--                            </child>
--                            <child>
--                              <object class="GtkImage" id="icon_guest_account">
--                                <property name="width_request">48</property>
--                                <property name="height_request">48</property>
--                                <property name="visible">True</property>
--                                <property name="pixbuf">../../pixmaps/conf/user.png</property>
--                              </object>
--                              <packing>
--                                <property name="x">10</property>
--                                <property name="y">85</property>
--                              </packing>
--                            </child>
--                            <child>
--                              <object class="GtkCheckButton" id="guest_account">
--                                <property name="label" translatable="yes" comments="Mnemonic: Yes&#10;Context: Page 0 (Main Settings)&#10;Item: guest account&#10;&#10;Place an underscore before the character that is to serve as the keyboard mnemonic.&#10;&#10;The mnemonic chosen for this item cannot be shared by any other item on this page&#10;(see context for translation) nor by any of the global context items!">Enable _guest account</property>
--                                <property name="width_request">200</property>
--                                <property name="height_request">30</property>
--                                <property name="visible">True</property>
--                                <property name="can_focus">True</property>
--                                <property name="receives_default">False</property>
--                                <property name="use_underline">True</property>
--                                <property name="draw_indicator">True</property>
--                              </object>
--                              <packing>
--                                <property name="x">70</property>
--                                <property name="y">75</property>
--                              </packing>
--                            </child>
--                            <child>
--                              <object class="GtkLabel" id="lbl_guest_account_description">
--                                <property name="width_request">490</property>
--                                <property name="height_request">55</property>
--                                <property name="visible">True</property>
--                                <property name="yalign">0</property>
--                                <property name="label" translatable="yes" comments="Mnemonic: No&#10;Context: Page 0 (Main Settings)&#10;Item: guest login description">Whether we should allow guest logins on the system. On password-protected computers, this greatly increases the chances of gathering information.</property>
--                                <property name="wrap">True</property>
--                                <attributes>
--                                  <attribute name="foreground" value="#444444444444"/>
--                                </attributes>
--                              </object>
--                              <packing>
--                                <property name="x">70</property>
--                                <property name="y">100</property>
--                              </packing>
--                            </child>
--                            <child>
-                               <object class="GtkImage" id="icon_auto_connect">
+                               </object>
+                               <packing>
+                                 <property name="x">70</property>
+@@ -111,6 +111,7 @@
+                                 <property name="width_request">250</property>
+                                 <property name="height_request">30</property>
+                                 <property name="visible">True</property>
++                                <property name="sensitive">False</property>
+                                 <property name="xalign">0</property>
+                                 <property name="label" translatable="yes" comments="Mnemonic: Yes&#10;Context: Page 0 (Main Settings)&#10;Item: frequency&#10;&#10;Place an underscore before the character that is to serve as the keyboard mnemonic.&#10;&#10;The mnemonic chosen for this item cannot be shared by any other item on this page&#10;(see context for translation) nor by any of the global context items!">Fre_quency of reports and actions</property>
+                                 <property name="use_underline">True</property>
+@@ -125,6 +126,7 @@
+                                 <property name="width_request">490</property>
+                                 <property name="height_request">55</property>
+                                 <property name="visible">True</property>
++                                <property name="sensitive">False</property>
+                                 <property name="xalign">0</property>
+                                 <property name="yalign">0</property>
+                                 <property name="label" translatable="yes" comments="Mnemonic: No&#10;Context: Page 0 (Main Settings)&#10;Item: delay description">Number of minutes to wait before waking up Prey. Control Panel users can change this setting later on the web.</property>
+@@ -143,6 +145,7 @@
                                  <property name="width_request">48</property>
                                  <property name="height_request">48</property>
-@@ -1218,12 +1107,6 @@
-       </object>
-     </child>
-   </object>
--  <object class="GtkAdjustment" id="delay_adjustment">
--    <property name="value">20</property>
--    <property name="lower">5</property>
--    <property name="upper">55</property>
--    <property name="step_increment">5</property>
--  </object>
-   <object class="GtkAboutDialog" id="about_prey_config">
-     <property name="border_width">5</property>
-     <property name="resizable">False</property>
+                                 <property name="visible">True</property>
++                                <property name="sensitive">False</property>
+                                 <property name="pixbuf">../../pixmaps/conf/user.png</property>
+                               </object>
+                               <packing>
+@@ -156,7 +159,8 @@
+                                 <property name="width_request">200</property>
+                                 <property name="height_request">30</property>
+                                 <property name="visible">True</property>
+-                                <property name="can_focus">True</property>
++                                <property name="can_focus">False</property>
++                                <property name="sensitive">False</property>
+                                 <property name="receives_default">False</property>
+                                 <property name="use_underline">True</property>
+                                 <property name="draw_indicator">True</property>
+@@ -171,6 +175,7 @@
+                                 <property name="width_request">490</property>
+                                 <property name="height_request">55</property>
+                                 <property name="visible">True</property>
++                                <property name="sensitive">False</property>
+                                 <property name="yalign">0</property>
+                                 <property name="label" translatable="yes" comments="Mnemonic: No&#10;Context: Page 0 (Main Settings)&#10;Item: guest login description">Whether we should allow guest logins on the system. On password-protected computers, this greatly increases the chances of gathering information.</property>
+                                 <property name="wrap">True</property>
