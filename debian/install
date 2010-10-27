@@ -6,3 +6,4 @@ modules usr/lib/prey
 pixmaps usr/share/prey
 version usr/share/prey
 prey.sh usr/lib/prey
+config etc/prey/
