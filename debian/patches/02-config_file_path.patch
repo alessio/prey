@@ -1,0 +1,18 @@
+Description: The config file is installed in /etc/prey
+Author: Alessio Treglia <alessio@debian.org>
+Forwarded: not-needed
+---
+ core/setup |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- prey.orig/core/setup
++++ prey/core/setup
+@@ -73,7 +73,7 @@ set_constants(){
+ 	readonly lang
+ 	readonly start_time=`date +"%F %T"`
+ 
+-	readonly config_file="$base_path/config"
++	readonly config_file="/etc/prey/config"
+ 	readonly tmpdir="$tmpbase/p${RANDOM}"
+ 	# readonly last_response="$tmpbase/last_response.tmp"
+ 	readonly logged_user
