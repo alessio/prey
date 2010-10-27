@@ -1,6 +1,0 @@
-#!/bin/bash
-
-INSTALLPATH=/usr/lib/prey
-PREY_FILE=prey.sh
-
-$INSTALLPATH/$PREY_FILE > /dev/null
