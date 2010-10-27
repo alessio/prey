@@ -1,3 +1,4 @@
 01-disable_auto_updates.patch
 02-config_file_path.patch
 03-prey_configurator.patch
+04-crontab.patch
