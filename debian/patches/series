@@ -2,3 +2,4 @@
 02-config_file_path.patch
 03-prey_configurator.patch
 04-crontab.patch
+05-modules_blacklist.patch
