@@ -1,14 +1,16 @@
 Description: Disable automatic updates.
  Don't try to fetch new release from upstream, updates are
  provided by Debian.
+ Disable automatic modules installation/updates.
 Author: Alessio Treglia <alessio@debian.org>
 Forwarded: not-needed
 ---
  core/base                |    1 
- core/response            |    8 
+ core/modules             |   16 -
+ core/response            |   10 -
  core/updater             |  388 -----------------------------------------------
  platform/linux/functions |   16 -
- 4 files changed, 1 insertion(+), 412 deletions(-)
+ 5 files changed, 6 insertions(+), 425 deletions(-)
 
 --- prey.orig/core/base
 +++ prey/core/base
@@ -36,6 +38,15 @@ Forwarded: not-needed
 +	log " -- Automatic updates are disabled."
  
  }
+ 
+@@ -97,7 +91,7 @@ process_module_config(){
+ 			setup_module $module_name $upstream_version
+ 			if [ $? == 1 ]; then # we got an error installing the new module
+ 
+-				log " !! Couldn't install $module_name module from repository."
++				log " !! Automatic updates are disabled - Couldn't install $module_name module from repository."
+ 				unset module_name
+ 				continue
  
 --- prey.orig/core/updater
 +++ /dev/null
@@ -452,4 +463,31 @@ Forwarded: not-needed
 -############################################
  # device creation stuff
  ############################################
+ 
+--- prey.orig/core/modules
++++ prey/core/modules
+@@ -30,20 +30,12 @@ setup_module(){
+ 	module_path="$base_path/modules/$1"
+ 	upstream_version=$2
+ 
++	# disable automatic updates
+ 	if [ ! -d "$module_path" ]; then
+ 		log " !! Module $1 not found!"
+-		install_or_update_module $1
+-		return $?
+-	elif [ -n "$upstream_version" ]; then # module is already there, lets see if the versions match
+-
+-		local installed_version=`cat "$module_path/version" 2> /dev/null`
+-
+-		if [ `is_greater_than $upstream_version $installed_version` == 1 ]; then
+-			log " -- Updating $module module to version $upstream_version!"
+-			install_or_update_module $1
+-			return $?
+-		fi
+-
++		return 1
++	else
++		return 0
+ 	fi
+ }
  
