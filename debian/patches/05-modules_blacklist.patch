@@ -4,7 +4,8 @@ Description: Provide a blacklist to prevent one or more modules from being
 Author: Alessio Treglia <alessio@debian.org>
 ---
  core/modules |   14 +++++++++-----
- 1 file changed, 9 insertions(+), 5 deletions(-)
+ core/setup   |    1 +
+ 2 files changed, 10 insertions(+), 5 deletions(-)
 
 --- prey.orig/core/modules
 +++ prey/core/modules
@@ -19,8 +20,8 @@ Author: Alessio Treglia <alessio@debian.org>
 -		echo 1
 -	else
 -		return 0
-+	if [ -e "/etc/prey/modules.blacklist" ] && [ ! -d "/etc/prey/modules.blacklist" ]; then
-+		local blacklist=`cat "/etc/prey/modules.blacklist"`
++	if [ -e "$modules_blacklist_file" ] && [ ! -d "$modules_blacklist_file" ]; then
++		local blacklist=`cat "$modules_blacklist_file"`
 +		for mod in $blacklist; do
 +			if [ "$1" = "$mod" ]; then
 +				return 0
@@ -31,3 +32,13 @@ Author: Alessio Treglia <alessio@debian.org>
  }
  
  get_active_modules_from_filesystem(){
+--- prey.orig/core/setup
++++ prey/core/setup
+@@ -74,6 +74,7 @@ set_constants(){
+ 	readonly start_time=`date +"%F %T"`
+ 
+ 	readonly config_file="/etc/prey/config"
++	readonly modules_blacklist_file="/etc/prey/modules.blacklist"
+ 	readonly tmpdir="$tmpbase/p${RANDOM}"
+ 	# readonly last_response="$tmpbase/last_response.tmp"
+ 	readonly logged_user
