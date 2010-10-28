@@ -40,4 +40,11 @@ The software can operate in two modes:
 The configuration file is commented with notes and pointers, so it's easy
 to configure the program by editing `/etc/prey/config' by hand.
 
+PAY PARTICULAR ATTENTION TO THE FOLLOWING POINTS:
+
+ * The "Control Panel" mode support is in a quite experimental state,
+   especially the handling of the modules, and some of them, seem broken.
+ * If you want to prevent one or more modules from being loaded, list such
+   modules in `/etc/prey/modules.blacklist'.
+
  -- Alessio Treglia <alessio@debian.org>  Wed, 27 Oct 2010 11:46:15 +0200
