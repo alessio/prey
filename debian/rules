@@ -18,7 +18,7 @@ override_dh_fixperms:
 		platform/linux/functions \
 		platform/linux/settings
 	find $(CURDIR)/debian/prey/usr/lib/prey/modules -type f | xargs chmod +x
-	find $(CURDIR)/debian/prey/usr/lib/prey -regextype posix-extended \
+	find $(CURDIR)/debian/prey/var/lib/prey -regextype posix-extended \
 		-regex ".*(mp3|png|ico|version)" | xargs chmod -x
 	chmod -x $(CURDIR)/debian/prey/usr/share/prey/pixmaps/prey.ico
 	dh_fixperms
