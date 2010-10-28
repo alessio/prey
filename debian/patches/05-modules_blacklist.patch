@@ -21,7 +21,7 @@ Author: Alessio Treglia <alessio@debian.org>
 -	else
 -		return 0
 +	if [ -e "$modules_blacklist_file" ] && [ ! -d "$modules_blacklist_file" ]; then
-+		local blacklist=`cat "$modules_blacklist_file"`
++		local blacklist=`cat "$modules_blacklist_file" | sed -e 's/^#.*$//'`
 +		for mod in $blacklist; do
 +			if [ "$1" = "$mod" ]; then
 +				return 0
