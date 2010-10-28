@@ -3,9 +3,10 @@ Description: Provide a blacklist to prevent one or more modules from being
  /usr/lib/prey/modules/$module/core/).
 Author: Alessio Treglia <alessio@debian.org>
 ---
- core/modules |   14 +++++++++-----
- core/setup   |    1 +
- 2 files changed, 10 insertions(+), 5 deletions(-)
+ core/modules      |   14 +++++++++-----
+ core/setup        |    1 +
+ modules.blacklist |    8 ++++++++
+ 3 files changed, 18 insertions(+), 5 deletions(-)
 
 --- prey.orig/core/modules
 +++ prey/core/modules
@@ -42,3 +43,14 @@ Author: Alessio Treglia <alessio@debian.org>
  	readonly tmpdir="$tmpbase/p${RANDOM}"
  	# readonly last_response="$tmpbase/last_response.tmp"
  	readonly logged_user
+--- /dev/null
++++ prey/modules.blacklist
+@@ -0,0 +1,8 @@
++# Line starting with '#' will be skipped.
++#
++# Put this file in /etc/prey/modules.blacklist
++
++alarm
++alert
++secure
++geo
