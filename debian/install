@@ -2,7 +2,7 @@ debian/prey-config.desktop usr/share/applications
 platform usr/lib/prey
 core usr/lib/prey
 lang usr/lib/prey
-modules usr/lib/prey
+modules var/lib/prey
 pixmaps usr/share/prey
 version usr/lib/prey
 prey.sh usr/lib/prey
