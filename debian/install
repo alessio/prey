@@ -1,4 +1,3 @@
-debian/prey-config.desktop usr/share/applications
 platform usr/lib/prey
 core usr/lib/prey
 lang usr/lib/prey
