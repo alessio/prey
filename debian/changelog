@@ -1,4 +1,4 @@
-prey (0.4.4-1) unstable; urgency=low
+prey (0.4.4-1) experimental; urgency=low
 
   * Initial release. (Closes: #577932)
 
