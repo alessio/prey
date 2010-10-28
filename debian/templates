@@ -1,0 +1,6 @@
+Template: prey/reporting_frequency
+Type: string
+Default: 20
+_Description: Frequency of reports and actions:
+ Number of minutes to wait before waking up Prey. Control Panel users can
+ change this settings later on the web.

@@ -1,0 +1,90 @@
+#!/bin/bash
+####################################################################
+# Prey Alert Module Linux Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+change_wallpaper() {
+	local gconftool=`which gconftool-2`
+	local kdesktop=`which kdesktop`
+	local xfce=`which xfconf-query`
+
+	if [ -n "$gconftool" ]; then
+
+		wallpaper_command="$gconftool --type string --set /desktop/gnome/background/picture_filename $alert__wallpaper"
+		wallpaper_command_two="$gconftool --type string --set /desktop/gnome/background/picture_options 'scaled'"
+
+	elif [ -n "$kdesktop" ]; then # untested
+
+		wallpaper_command="$kdesktop KBackgroundIface setWallpaper $alert__wallpaper 8" # 8 = scale
+
+	elif [ -n "$xfce" ]; then # requires xfce 4.6
+
+		wallpaper_command="$xfce -c xfce4-desktop -p /backdrop/screen0/monitor0/image-path -s $alert__wallpaper"
+
+	fi
+
+	if [ -n "$wallpaper_command" ]; then
+
+		run_as_current_user "$wallpaper_command"
+
+		if [ -n "$wallpaper_command_two" ]; then # couldn't find a way to run both commands as one (gconf complains with &&'s)
+
+			run_as_current_user "$wallpaper_command_two"
+
+		fi
+
+	fi
+
+}
+
+alert_user() {
+
+	local dialog_title="Important"
+
+	local zenity=`which zenity`
+	local kdialog=`which kdialog`
+
+	if [ -n "$zenity" ]; then
+
+		# shall we play with the guy?
+		# $zenity --question --text "Is this computer yours?"
+		# if [ $? = 0 ]; then
+			# TODO: inventar buena talla
+		# fi
+
+		# alert_command="$zenity --info --text"
+		alert_command="$zenity --error --title $dialog_title --text"
+
+	elif [ -n "$kdialog" ]; then #untested!
+
+		alert_command="$kdialog --error"
+
+	fi
+
+	if [ -n "$alert_command" ]; then
+
+		if [ `whoami` == 'root' ]; then
+			DISPLAY=:0 su $logged_user -c "$alert_command \"$alert__alert_message\"" &
+		else
+			$alert_command "$alert__alert_message" &
+		fi
+
+	fi
+
+}
+
+
+say_message(){
+
+	local festival=`which festival`
+	local espeak=`which espeak`
+	if [ -n "$festival" ]; then
+		echo "$alert__alert_message" | "$festival" --tts
+	elif [ -n "$espeak" ]; then
+		$espeak -ven "$alert__alert_message"
+	else
+		log ' -- Text-to-speech software not found! Please install "festival" or "espeak" via your package manager.'
+	fi
+}

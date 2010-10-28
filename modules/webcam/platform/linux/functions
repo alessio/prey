@@ -1,0 +1,55 @@
+#!/bin/bash
+####################################################################
+# Prey Webcam Module Linux Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+take_picture() {
+
+	# do we have streamer installed ?
+	local streamer=`which streamer`
+	if [ -n "$streamer" ]; then
+
+		# take four pictures every 0.5 seconds as JPEG
+		$streamer -t 4 -r 0.5 -o "$tmpdir/streamer0.jpeg" &> /dev/null
+
+		if [ -f "$tmpdir/streamer3.jpeg" ]; then # we got it
+
+			mv "$tmpdir/streamer3.jpeg" "$webcam__picture" > /dev/null
+			rm -f "$tmpdir/streamer{0,1,2}.jpeg" 2> /dev/null
+
+		else # some webcams are unable to take JPGs so we try to grab a PPM
+
+			$streamer -t 4 -r 0.5 -o "$tmpdir/streamer0.ppm" &> /dev/null
+			if [ -f "$tmpdir/streamer3.ppm" ]; then # good
+
+				local convert=`which convert`
+				if [ -n "$convert" ]; then # lets convert it to jpg
+					$convert "$tmpdir/streamer3.ppm" "$webcam__picture" > /dev/null
+				else # lets just send it as a PPM
+					log " -- Could't find Imagemagick! Sending image as PPM."
+					webcam__picture="$tmpdir/streamer3.ppm"
+				fi
+
+				rm -f "$tmpdir/streamer{0,1,2}.ppm"
+
+			fi
+
+		fi
+
+	fi
+
+}
+
+capture_video() {
+
+	# we should already know if we do have streamer
+	if [ -n "$streamer" ]; then
+
+		local frames=$(( $webcam__video_capture_time * $webcam__frames_per_second ))
+		$streamer -o "$webcam__video" -f yuv2 -F stereo -r $webcam__frames_per_second -t $frames
+
+	fi
+
+}

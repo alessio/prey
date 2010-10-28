@@ -1,0 +1,36 @@
+Description: crontab file is installed in /etc/cron.d/,
+ adjust the scripts according to that.
+Author: Alessio Treglia <alessio@debian.org>
+---
+ core/functions |    6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+--- prey.orig/core/functions
++++ prey/core/functions
+@@ -155,7 +155,7 @@ remove_files(){
+ 
+ get_current_delay(){
+ 	# crontab -l | grep prey | sed "s/^..\([0-9]*\).*/\1/"
+-	crontab -l | grep prey | head -1 | sed 's/ \/.*//'
++	grep 'prey.sh' /etc/cron.d/prey | head -1 | sed 's/ root.*//'
+ }
+ 
+ get_delay_for(){
+@@ -182,7 +182,7 @@ get_delay_for(){
+ 
+ update_execution_delay(){
+ 	local full_path=`full_path "$base_path"`
+-	(crontab -l | grep -v prey; echo "${new_delay}" "${full_path}/prey.sh > /var/log/prey.log") | crontab -
++	(grep -v 'prey.sh' /etc/cron.d/prey; echo "${new_delay}" root "${full_path}/prey.sh > /var/log/prey.log") | cat >/etc/cron.d/prey
+ }
+ 
+ 
+@@ -208,7 +208,7 @@ verify_installation(){
+ 		log " !! Cron daemon not found! Try running it with 'sudo /etc/init.d/cron start'."
+ 	fi
+ 	log " -- Checking for crontab entry..."
+-	local result=`crontab -l | grep 'prey.sh' | wc -l 2> /dev/null`
++	local result=`grep 'prey.sh' /etc/cron.d/prey | wc -l 2> /dev/null`
+ 	if [ "$result" -gt 0 ]; then
+ 		log " -- Found!"
+ 	else

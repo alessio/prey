@@ -1,0 +1,30 @@
+Description: The config file is installed in /etc/prey
+Author: Alessio Treglia <alessio@debian.org>
+Forwarded: not-needed
+---
+ core/setup |    2 +-
+ prey.sh    |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+--- prey.orig/core/setup
++++ prey/core/setup
+@@ -73,7 +73,7 @@ set_constants(){
+ 	readonly lang
+ 	readonly start_time=`date +"%F %T"`
+ 
+-	readonly config_file="$base_path/config"
++	readonly config_file="/etc/prey/config"
+ 	readonly tmpdir="$tmpbase/p${RANDOM}"
+ 	# readonly last_response="$tmpbase/last_response.tmp"
+ 	readonly logged_user
+--- prey.orig/prey.sh
++++ prey/prey.sh
+@@ -13,7 +13,7 @@ readonly base_path=`dirname "$0"`
+ ####################################################################
+ 
+ . "$base_path/version"
+-. "$base_path/config"
++. "/etc/prey/config"
+ if [ ! -f "lang/$lang" ]; then # fallback to english in case the lang is missing
+ 	lang='en'
+ fi

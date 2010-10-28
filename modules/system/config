@@ -1,0 +1,8 @@
+#!/bin/bash
+####################################################################
+# Prey System Module Config File - by Carlos Yaconi H.
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+system__vars='serial_number uuid mb_vendor mb_serial mb_vendor mb_model mb_version bios_vendor bios_version cpu_model cpu_speed cpu_cores ram_size ram_modules'

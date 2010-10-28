@@ -1,0 +1,5 @@
+prey (0.4.4-1) experimental; urgency=low
+
+  * Initial release. (Closes: #577932)
+
+ -- Alessio Treglia <alessio@debian.org>  Wed, 27 Oct 2010 11:46:15 +0200

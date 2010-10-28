@@ -1,0 +1,48 @@
+prey for Debian
+-----------------
+
+Prey is a collection of shell scripts which allows you to keep track of
+your laptop remotely in the unfortunate case it gets lost or stolen.
+
+I've applied some patches to make this software suitable for Debian:
+
+ * Guest account creation is disabled due to security reasons.
+ * Configuration file gets installed in `/etc/prey/config' and not
+   in the application path along with other scripts and modules.
+ * The application gets installed system wide, so it doesn't rely on
+   any per-user configuration.
+ * The graphical configuration tool provided by upstream (prey-config.py)
+   seems not working as expected, so it has been removed.
+
+The scripts run at a certain interval and checks for a specified URL
+on the web. If you want to tune the frequency of the ckecks, you can
+type the following command to re-configure the package (as root):
+
+    dpkg-reconfigure prey
+
+When running, prey checks the URL set in the configuration file; if it
+finds the 'missing_status_code' then it goes through the information
+gathering routine and tries to send all the collected information to
+the owner of the machine.
+
+The software can operate in two modes:
+
+ * Standalone: Reports are sent directly to the laptop's owner.
+   This requires user to activate Prey by generating/deleting a URL and
+   set up a scp/sftp/mail server settings as well.
+ * Control Panel: Reports are sent to preyproject.com.
+   After obtaining an account at http://control.preyproject.com/signup
+   users only need to set 'apt_key' and 'device_key' properly in the
+   `/etc/prey/config' file.
+   Visit http://preyproject.com/ for more information about the provided
+   services.
+
+The configuration file is commented with notes and pointers, so it's easy
+to configure the program by editing `/etc/prey/config' by hand.
+
+PAY PARTICULAR ATTENTION TO THE FOLLOWING POINTS:
+
+ * The "Control Panel" mode support is in a quite experimental state,
+   especially the handling of the modules, and some of them, seem broken.
+
+ -- Alessio Treglia <alessio@debian.org>  Wed, 27 Oct 2010 11:46:15 +0200

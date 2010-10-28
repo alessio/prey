@@ -1,0 +1,30 @@
+#!/bin/bash
+####################################################################
+# Prey Alert Module - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+log "$STRING_SHOW_ALERT"
+alert_user
+
+if [ "$alert__say_message" == 'y' ]; then
+	log ' -- Saying the message out loud...'
+	say_message
+fi
+
+if [ $alert__change_wallpaper == 'y' ]; then
+
+	# if [ ! -f "$alert__wallpaper" ]; then
+
+		# TODO: finish this, to allow setting the wallpaper remotely
+		# if [ `find_in "$alert__wallpaper" 'http://'` ]; then
+		# 	wget $alert__wallpaper -O $module_path/lib/prey-wallpaper-custom.jpg
+		# 	alert__wallpaper="$module_path/lib/prey-wallpaper-custom.jpg"
+		# sed -i -e $module_path/config 'alert__wallpaper=.*$/alert__wallpaper=\'$module_path/lib/prey-wallpaper-$lang.png\'/'
+		# fi
+
+	# fi
+
+	change_wallpaper
+fi

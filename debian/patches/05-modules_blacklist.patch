@@ -1,0 +1,56 @@
+Description: Provide a blacklist to prevent one or more modules from being
+ inserted rather than test the respective 'run' files (installed in
+ /usr/lib/prey/modules/$module/core/).
+Author: Alessio Treglia <alessio@debian.org>
+---
+ core/modules      |   14 +++++++++-----
+ core/setup        |    1 +
+ modules.blacklist |    8 ++++++++
+ 3 files changed, 18 insertions(+), 5 deletions(-)
+
+--- prey.orig/core/modules
++++ prey/core/modules
+@@ -5,13 +5,17 @@
+ # License: GPLv3
+ ####################################################################
+ 
+-# mac/linux only. windows has another method of de/activating modules
++# query the blacklist to decide whether to run a module
+ is_module_active(){
+-	if [ -x "$base_path/modules/$1/core/run" ]; then
+-		echo 1
+-	else
+-		return 0
++	if [ -e "$modules_blacklist_file" ] && [ ! -d "$modules_blacklist_file" ]; then
++		local blacklist=`cat "$modules_blacklist_file" | sed -e 's/^#.*$//'`
++		for mod in $blacklist; do
++			if [ "$1" = "$mod" ]; then
++				return 0
++			fi
++		done
+ 	fi
++	echo 1
+ }
+ 
+ get_active_modules_from_filesystem(){
+--- prey.orig/core/setup
++++ prey/core/setup
+@@ -74,6 +74,7 @@ set_constants(){
+ 	readonly start_time=`date +"%F %T"`
+ 
+ 	readonly config_file="/etc/prey/config"
++	readonly modules_blacklist_file="/etc/prey/modules.blacklist"
+ 	readonly tmpdir="$tmpbase/p${RANDOM}"
+ 	# readonly last_response="$tmpbase/last_response.tmp"
+ 	readonly logged_user
+--- /dev/null
++++ prey/modules.blacklist
+@@ -0,0 +1,8 @@
++# Line starting with '#' will be skipped.
++#
++# Put this file in /etc/prey/modules.blacklist
++
++alarm
++alert
++secure
++geo

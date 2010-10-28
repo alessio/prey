@@ -133,11 +133,7 @@ fi
 ####################################################################
 
 check_running_actions
-
-if [ "${#actions[*]}" -gt 0 ]; then
-	run_pending_actions &
-else
-	cleanup
-fi
+run_pending_actions &
+cleanup
 
 exit 0

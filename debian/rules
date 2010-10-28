@@ -1,0 +1,28 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_install:
+	dh_install
+	# Remove old translations
+	rm -rf $(CURDIR)/debian/prey/usr/lib/prey/lang/old
+
+override_dh_fixperms:
+	# Remove Python configuration tool, it doesn't work as expected
+	rm $(CURDIR)/debian/prey/usr/lib/prey/platform/linux/prey-config.*
+	# Fix file permissions
+	cd $(CURDIR)/debian/prey/usr/lib/prey &&\
+	chmod +x \
+		core/* \
+		platform/linux/functions \
+		platform/linux/settings
+	find $(CURDIR)/debian/prey/var/lib/prey/modules -type f | xargs chmod +x
+	find $(CURDIR)/debian/prey/*/lib/prey -regextype posix-extended \
+		-regex ".*(mp3|png|ico|version)" | xargs chmod -x
+	chmod -x $(CURDIR)/debian/prey/usr/share/prey/pixmaps/prey.ico
+	dh_fixperms
+
+# Move to the sources root before running this.
+get-orig-source:
+	uscan --force-download --repack --rename

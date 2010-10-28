@@ -1,0 +1,21 @@
+#!/bin/bash
+####################################################################
+# Prey Geo Module Core Functions - by Tomas Pollak (bootlog.org)
+# URL: http://preyproject.com
+# License: GPLv3
+####################################################################
+
+get_current_location() {
+	if [ -n "$wifi_points" ]; then
+		current_location_json=`getter -X POST -H "Content-Type: application/json" -d "{ 'version': '1.1.0', 'host': '$check_url', 'request_address': true, 'wifi_towers': [ ${wifi_points} ] }" http://www.google.com/loc/json`
+	fi
+}
+
+parse_location_response() {
+
+	current_lat=`echo $current_location_json | LANG=en_EN.UTF-8 sed 's/.*latitude":\(-*[0-9.]*\),.*/\1/'`
+	current_lng=`echo $current_location_json | LANG=en_EN.UTF-8 sed 's/.*longitude":\(-*[0-9.]*\),.*/\1/'`
+	# current_address=`echo $current_location_json | LANG=en_EN.UTF-8 sed 's/.*address":\(.*\)/\1/'`
+	spot_accuracy=`echo $current_location_json | LANG=en_EN.UTF-8 sed 's/.*accuracy":\([0-9.]*\)}.*/\1/'`
+
+}
