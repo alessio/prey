@@ -9,6 +9,8 @@ override_dh_install:
 	rm -rf $(CURDIR)/debian/prey/usr/lib/prey/lang/old
 
 override_dh_fixperms:
+	# Remove Python configuration tool, it doesn't work as expected
+	rm $(CURDIR)/debian/prey/usr/lib/prey/platform/linux/prey-config.*
 	# Fix file permissions
 	cd $(CURDIR)/debian/prey/usr/lib/prey &&\
 	chmod +x \

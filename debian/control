@@ -3,12 +3,9 @@ Section: utils
 Priority: optional
 Maintainer: Alessio Treglia <alessio@debian.org>
 Build-Depends: debhelper (>= 7.0.50~),
- po-debconf,
- python-support,
- python
+ po-debconf
 Homepage: http://www.preyproject.com/
 Standards-Version: 3.9.1
-XS-Python-Version: all
 Vcs-Git: git://git.debian.org/git/collab-maint/prey.git
 Vcs-Browser: http://git.debian.org/?p=collab-maint/prey.git
 
@@ -23,10 +20,6 @@ Depends: openssl,
  libnet-ssleay-perl,
  ${perl:Depends},
  ${misc:Depends}
-Recommends: python (>= 2.5),
- python-gtk2,
- menu,
- ${python:Depends}
 Description: utility for tracking stolen computers
  Prey is a lightweight program that will help you track and find your laptop if
  it ever gets stolen.
